@@ -25,11 +25,7 @@ class Algorithm:
 class PGD(Algorithm):
     '''
         Paper: Solving linear inverse problems using GAN priors
-    '''
-
-    def __init__(self, generator, config):
-        super().__init__(generator, config)
-    
+    '''    
     def get_default_config(self):
         return {
             'forward': 'inpainting',
