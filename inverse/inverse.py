@@ -57,18 +57,22 @@ class PGD(Algorithm):
         
         for image_t in image_pbar:
             w_f = self.forward(w)
+            image_optimizer.zero_grad()
             image_loss = F.mse_loss(w_f, x).mean()
             image_loss.backward()
+            image_optimizer.step()
             image_pbar.set_description(f'Image loss: {image_loss:.4f}')
             latent = self.get_latent(with_grad=True)
             latent_optimizer = torch.optim.Adam(self._listify(latent), lr=self.config['lr'])
             latent_pbar = tqdm(range(self.config['latent_steps']))
             
             for latent_t in latent_pbar:
+                latent_optimizer.zero_grad()
                 latent_loss = F.mse_loss(self.forward(self.gen_forward(self.generator, latent)), x).mean()
                 latent_loss.backward()
+                latent_optimizer.step()
                 latent_pbar.set_description(f'Latent loss: {latent_loss:.4f}')
-            w.data = self.gen_forward(generator, latent).data
+            w.data = self.gen_forward(self.generator, latent).data
         return w
 
     
