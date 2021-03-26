@@ -54,7 +54,7 @@ class PGD(Algorithm):
         image_optimizer = torch.optim.Adam([w], lr=self.config['lr'])
 
         image_pbar = tqdm(range(self.config['image_steps']))
-        
+        latent = None
         for image_t in image_pbar:
             w_f = self.forward(w)
             image_optimizer.zero_grad()
@@ -62,7 +62,8 @@ class PGD(Algorithm):
             image_loss.backward()
             image_optimizer.step()
             image_pbar.set_description(f'Image loss: {image_loss:.4f}')
-            latent = self.get_latent(with_grad=True)
+            if latent is None:
+                latent = self.get_latent(with_grad=True)
             latent_optimizer = torch.optim.Adam(self._listify(latent), lr=self.config['lr'])
             latent_pbar = tqdm(range(self.config['latent_steps']))
             
