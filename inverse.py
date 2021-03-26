@@ -33,8 +33,8 @@ class PGD(Algorithm):
             'lr': 1e-3,
             'batch_size': 1,
             'image_shape': [1024, 1024, 3],
-            'image_steps': 100,
-            'latent_steps': 50,
+            'image_steps': 50,
+            'latent_steps': 100,
         }
 
     def invert(self, x):        
@@ -50,14 +50,15 @@ class PGD(Algorithm):
             w_f = self.forward(w)
             image_loss = F.mse_loss(w_f, x).mean()
             image_loss.backward()
-            
+            image_pbar.set_description(f'Image loss: {image_loss:.4f}')
             latent = self.get_latent(with_grad=True)
             latent_optimizer = torch.optim.Adam([latent], lr=config['lr'])
             latent_pbar = tqdm(range(config['latent_steps']))
-            
+
             for latent_t in latent_pbar:
                 latent_loss = F.mse_loss(self.forward(self.gen_forward(generator, latent)), x).mean()
                 latent_loss.backward()
+                latent_pbar.set_description(f'Latent loss: {latent_loss:.4f}')
             w.data = self.gen_forward(generator, latent).data
         return w
 
