@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from .utils import *
+from utils import *
 from tqdm import tqdm
 
 class Algorithm:
