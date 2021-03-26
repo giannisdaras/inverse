@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from .utils import *
+from inverse.utils import *
 from tqdm import tqdm
 
 class Algorithm:
@@ -21,6 +21,15 @@ class Algorithm:
             return Inpainter(get_inpainting_mask(x))
         else:
             raise NotImplementedError()
+    
+    def _listify(self, objects):
+        output_list = []
+        for curr_item in objects:
+            if isinstance(curr_item, list):
+                output_list += curr_item
+            else:
+                output_list.append(curr_item)
+        return [x for x in output_list if x is not None]
 
 class PGD(Algorithm):
     '''
@@ -40,11 +49,11 @@ class PGD(Algorithm):
     def invert(self, x):        
         self.forward = self._get_forward_operator(x)
         # w has the same shape with x
-        w = torch.zeros([config['batch_size']] + config['image_shape'] ).to(self.config['device'])
+        w = torch.zeros((self.config['batch_size'],) + tuple(self.config['image_shape'])).to(self.config['device']) 
         w.requires_grad = True
-        image_optimizer = torch.optim.Adam([w], lr=config['lr'])
+        image_optimizer = torch.optim.Adam([w], lr=self.config['lr'])
 
-        image_pbar = tqdm(range(config['image_steps']))
+        image_pbar = tqdm(range(self.config['image_steps']))
         
         for image_t in image_pbar:
             w_f = self.forward(w)
@@ -52,11 +61,11 @@ class PGD(Algorithm):
             image_loss.backward()
             image_pbar.set_description(f'Image loss: {image_loss:.4f}')
             latent = self.get_latent(with_grad=True)
-            latent_optimizer = torch.optim.Adam([latent], lr=config['lr'])
-            latent_pbar = tqdm(range(config['latent_steps']))
-
+            latent_optimizer = torch.optim.Adam(self._listify(latent), lr=self.config['lr'])
+            latent_pbar = tqdm(range(self.config['latent_steps']))
+            
             for latent_t in latent_pbar:
-                latent_loss = F.mse_loss(self.forward(self.gen_forward(generator, latent)), x).mean()
+                latent_loss = F.mse_loss(self.forward(self.gen_forward(self.generator, latent)), x).mean()
                 latent_loss.backward()
                 latent_pbar.set_description(f'Latent loss: {latent_loss:.4f}')
             w.data = self.gen_forward(generator, latent).data

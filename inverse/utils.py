@@ -38,6 +38,6 @@ class ForwardOperator:
 class Inpainter(ForwardOperator):
     def __init__(self, mask):
         self.mask = mask
-    def __call__(self, x, y):
-        return x * mask
+    def __call__(self, x):
+        return x * self.mask
 
